@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties } from "react";
+import { CSSProperties, useState, useRef, useEffect } from "react";
 import Title from "@/components/title";
 import Button from "@/components/button";
 // import Button from "@/components/button";
@@ -16,13 +16,45 @@ const styles: CSSProperties = {
 
 const languages = ["TypeScript", "Python", "C#", "Rust", "Java", "Java"];
 
-export default function HomePage() {
-  const isAuthorized = true;
-  const isAdmin = false;
+function useCounter() {
+  const [count, setCount] = useState<number>(0);
 
-  function handleClick() {
-    // alert("You clicked the button!");
-    confirm("Are you sure you want to click this button?");
+  function increment(amount = 1) {
+    setCount((prev) => {
+      localStorage.setItem("count", (prev + 1).toString());
+      return prev + amount;
+    });
+  }
+
+  return [count, increment] as const;
+}
+
+export default function HomePage() {
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState(true);
+  const [count, increment] = useCounter();
+
+  const h2Ref = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    console.log("Count:", count);
+  }, [count]);
+
+  function signOutClick() {
+    setIsAuthorized(false);
+    setIsAdmin(false);
+
+    // h2Ref.current?.textContent
+  }
+
+  function signInClick() {
+    setIsAuthorized(true);
+    setIsAdmin(true);
+  }
+
+  function registerClick() {
+    setIsAuthorized(true);
+    setIsAdmin(false);
   }
 
   const languageList = languages.map((language, i) => (
@@ -43,7 +75,7 @@ export default function HomePage() {
       </Title>
       {/* <img /> */}
       <p style={styles}>hello world</p>
-      <h2>{msg}</h2>
+      <h2 ref={h2Ref}>{msg}</h2>
       {/*
           test
           test
@@ -53,17 +85,37 @@ export default function HomePage() {
         {isAdmin && <Button variant="outline">Admin Dashboard</Button>}
         {isAuthorized ? (
           <>
-            <Button onClick={handleClick}>Sign Out</Button>
+            <Button onClick={signOutClick}>Sign Out</Button>
           </>
         ) : (
           <>
-            <Button>Sign In</Button>
-            <Button variant="outline">Register</Button>
+            <Button onClick={signInClick}>Sign In</Button>
+            <Button onClick={registerClick} variant="outline">
+              Register
+            </Button>
           </>
         )}
       </div>
 
       <ul>{languageList}</ul>
+
+      <Counter value={count} onIncrement={() => increment()} />
+      <Counter value={count} onIncrement={() => increment()} />
+      <Counter value={count} onIncrement={() => increment()} />
+    </div>
+  );
+}
+
+type CounterProps = {
+  value: number;
+  onIncrement: () => void;
+};
+
+function Counter({ value, onIncrement }: CounterProps) {
+  return (
+    <div className="flex gap-2 items-center">
+      <Button onClick={() => onIncrement()}>Increment</Button>
+      <div>{value}</div>
     </div>
   );
 }
